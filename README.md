@@ -1,7 +1,13 @@
 # GMQLvsBioc
 Alternative approaches to https://doi.org/10.1093/bioinformatics/bty688 analysis
 
-[Quick link](https://github.com/waldronlab/GMQLvsBioc/files/2728079/genometric2018.pdf) to the manuscript.
+[Quick link](https://github.com/waldronlab/GMQLvsBioc/files/2728079/genometric2018.pdf) to the manuscript PDF, which states:
+
+> Also packages of R/
+Bioconductor (https://www.bioconductor.org/) have been proposed
+for tertiary analysis (Huber et al., 2015); they facilitate typical
+specific operations, but require to perform them through
+scripts and are not suitable for big data processing.
 
 # Use case (as specified by authors)
 
