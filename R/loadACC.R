@@ -44,3 +44,5 @@ mae <- c(mae, mutations=SummarizedExperiment(mutations))
 
 # select the elements for analysis
 mae2 <- mae[, , c("ACC_RNASeq2GeneNorm-20160128_ranged", "has.meth_ranged", "mutations")]
+
+saveRDS(mae2, file="ACC.rds")
