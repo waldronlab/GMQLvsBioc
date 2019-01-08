@@ -16,7 +16,7 @@ meth$symbols <- rowData(mae[["ACC_Methylation-20160128"]])$Gene_Symbol
 ## create a tibble that is TRUE if there is at least one 
 ## non-NA methylation value for the specimen
 library(dplyr)
-anyna <- function(x) any(is.na(x))
+anyna <- function(x) any(!is.na(x))
 system.time(hasmeth <- dplyr::filter(meth, !is.na(symbols)) %>%
               dplyr::group_by(symbols) %>% 
               dplyr::summarize_all(anyna)) #129s user, 12.8s system, 142s elapsed
@@ -29,6 +29,7 @@ rownames(hasmeth.matrix) <- hasmeth$symbols
 mae <- c(mae, has.meth=SummarizedExperiment(hasmeth.matrix))
 
 library(TCGAutils)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 mae <- TCGAutils::symbolsToRanges(mae)
 
 ## get ranges
