@@ -57,8 +57,8 @@ summary(colSums(keep))
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 0.000   3.000   5.000   6.727   8.000  55.000 
 
-sort(colSums(keep), decreasing = TRUE)[1:5]
+sort(colSums(keep), decreasing = TRUE)[1:round(ncol(keep)*0.05)]
 # TCGA-PK-A5HB-01A-11R-A29S-07 TCGA-OR-A5LJ-01A-11R-A29S-07 TCGA-OR-A5J5-01A-11R-A29S-07 
 # 55                           26                           18 
-# TCGA-OR-A5JA-01A-11R-A29S-07 TCGA-OR-A5JG-01A-11R-A29S-07 
-# 18                           14 
+# TCGA-OR-A5JA-01A-11R-A29S-07 
+# 18                           
