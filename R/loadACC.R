@@ -6,6 +6,8 @@
 
 library(curatedTCGAData)
 system.time(mae <- curatedTCGAData("ACC", c("Mutation", "RNASeq2GeneNorm", "Methylation"), dry.run = FALSE)) #~3 minutes
+##    user  system elapsed 
+## 171.516   3.109 181.086 
 
 ## create a data.frame for the methylation
 meth <- assay(mae, 1)
@@ -16,23 +18,27 @@ meth$symbols <- rowData(mae[["ACC_Methylation-20160128"]])$Gene_Symbol
 ## create a tibble that is TRUE if there is at least one 
 ## non-NA methylation value for the specimen
 library(dplyr)
-anyna <- function(x) any(!is.na(x))
+anynotna <- function(x) any(!is.na(x))
 system.time(hasmeth <- dplyr::filter(meth, !is.na(symbols)) %>%
               dplyr::group_by(symbols) %>% 
-              dplyr::summarize_all(anyna)) #129s user, 12.8s system, 142s elapsed
+              dplyr::summarize_all(anynotna)) #129s user, 12.8s system, 142s elapsed
 
 ## convert to a matrix with symbols for rownames
 hasmeth.matrix <- as.matrix(dplyr::select(hasmeth, -symbols))
 rownames(hasmeth.matrix) <- hasmeth$symbols
 
-## concatenate to mae
+## concatenate to mae. The only purpose of converting to 
+## SummarizedExperiment here is to enable TCGAutils::symbolsToRanges(mae) below
+
 mae <- c(mae, has.meth=SummarizedExperiment(hasmeth.matrix))
 
 library(TCGAutils)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(org.Hs.eg.db)
+
 mae <- TCGAutils::symbolsToRanges(mae)
 
-## get ranges
+## get ranges and add "within the first 2000 bp outside of the genes"
 rr <- rowRanges(mae[["ACC_RNASeq2GeneNorm-20160128_ranged"]])
 rr2000 <- flank(rr, width=2000, both=TRUE)
 
@@ -56,10 +62,10 @@ keep <- assay(mae3, "ACC_RNASeq2GeneNorm-20160128_ranged") > 3 &
 
 summary(colSums(keep))
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 0.000   3.000   5.000   6.727   8.000  55.000 
+# 0.000   5.000   8.000   8.961  11.000  69.000 
 
 sort(colSums(keep), decreasing = TRUE)[1:round(ncol(keep)*0.05)]
-# TCGA-PK-A5HB-01A-11R-A29S-07 TCGA-OR-A5LJ-01A-11R-A29S-07 TCGA-OR-A5J5-01A-11R-A29S-07 
-# 55                           26                           18 
-# TCGA-OR-A5JA-01A-11R-A29S-07 
-# 18                           
+# TCGA-PK-A5HB-01A-11R-A29S-07 TCGA-OR-A5LJ-01A-11R-A29S-07 
+# 69                           29 
+# TCGA-OR-A5J5-01A-11R-A29S-07 TCGA-OR-A5JA-01A-11R-A29S-07 
+# 26                           22 
