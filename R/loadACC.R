@@ -39,10 +39,26 @@ rr2000 <- flank(rr, width=2000, both=TRUE)
 nonsilent <- function(scores, ranges, qranges) any(scores != "Silent")
 mutations <- RaggedExperiment::qreduceAssay(mae[["ACC_Mutation-20160128"]], rr2000, nonsilent, "Variant_Classification")
 rownames(mutations) <- names(rr)
-
+mutations[is.na(mutations)] <- 0
 mae <- c(mae, mutations=SummarizedExperiment(mutations))
 
 # select the elements for analysis
 mae2 <- mae[, , c("ACC_RNASeq2GeneNorm-20160128_ranged", "has.meth_ranged", "mutations")]
 
 saveRDS(mae2, file="ACC.rds")
+
+mae3 <- intersectRows(mae2)
+mae3 <- MatchedAssayExperiment(mae3)
+keep <- assay(mae3, "ACC_RNASeq2GeneNorm-20160128_ranged") > 3 & 
+  assay(mae3, "has.meth_ranged") &
+  assay(mae3, "mutations")
+
+summary(colSums(keep))
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.000   3.000   5.000   6.727   8.000  55.000 
+
+sort(colSums(keep), decreasing = TRUE)[1:5]
+# TCGA-PK-A5HB-01A-11R-A29S-07 TCGA-OR-A5LJ-01A-11R-A29S-07 TCGA-OR-A5J5-01A-11R-A29S-07 
+# 55                           26                           18 
+# TCGA-OR-A5JA-01A-11R-A29S-07 TCGA-OR-A5JG-01A-11R-A29S-07 
+# 18                           14 
