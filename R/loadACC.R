@@ -61,3 +61,8 @@ sort(colSums(keep), decreasing = TRUE)[1:round(ncol(keep)*0.05)]
 # 69                           29 
 # TCGA-OR-A5J5-01A-11R-A29S-07 TCGA-OR-A5JA-01A-11R-A29S-07 
 # 26                           22 
+
+# > proc.time() - almost all disk access (magnetic drive on my laptop), only ~4 seconds system time
+#    user  system elapsed 
+# 208.178   4.299 220.584 
+
