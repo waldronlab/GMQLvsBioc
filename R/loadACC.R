@@ -11,26 +11,17 @@ system.time(mae <- curatedTCGAData("ACC", c("Mutation", "RNASeq2GeneNorm", "Meth
 
 ## create a data.frame for the methylation
 meth <- assay(mae, 1)
-meth <- apply(meth, 2, as.numeric)  # soon unnecessary work-around
-meth <- data.frame(meth, check.names = FALSE)
-meth$symbols <- rowData(mae[["ACC_Methylation-20160128"]])$Gene_Symbol
-
-## create a tibble that is TRUE if there is at least one 
-## non-NA methylation value for the specimen
-library(dplyr)
-anynotna <- function(x) any(!is.na(x))
-system.time(hasmeth <- dplyr::filter(meth, !is.na(symbols)) %>%
-              dplyr::group_by(symbols) %>% 
-              dplyr::summarize_all(anynotna)) #129s user, 12.8s system, 142s elapsed
-
-## convert to a matrix with symbols for rownames
-hasmeth.matrix <- as.matrix(dplyr::select(hasmeth, -symbols))
-rownames(hasmeth.matrix) <- hasmeth$symbols
+meth <- !is.na(meth) #NOT NA
+meth <- meth * 1L #convert to integer mode
+# number of non-missing per gene in each column
+meth <- rowsum(meth, group=rowData(mae[["ACC_Methylation-20160128"]])$Gene_Symbol)
+meth <- meth > 0 # logical "have at least a methylation"
 
 ## concatenate to mae. The only purpose of converting to 
 ## SummarizedExperiment here is to enable TCGAutils::symbolsToRanges(mae) below
 
-mae <- c(mae, has.meth=SummarizedExperiment(hasmeth.matrix))
+mae <- c(mae, has.meth=SummarizedExperiment(meth))
+rm(meth)
 
 library(TCGAutils)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -48,6 +39,7 @@ mutations <- RaggedExperiment::qreduceAssay(mae[["ACC_Mutation-20160128"]], rr20
 rownames(mutations) <- names(rr)
 mutations[is.na(mutations)] <- 0
 mae <- c(mae, mutations=SummarizedExperiment(mutations))
+rm(mutations, rr, rr2000)
 
 # select the elements for analysis
 mae2 <- mae[, , c("ACC_RNASeq2GeneNorm-20160128_ranged", "has.meth_ranged", "mutations")]
