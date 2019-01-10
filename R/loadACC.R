@@ -5,14 +5,19 @@
 # with the highest number of such mutations."
 
 library(curatedTCGAData)
-system.time(mae <- curatedTCGAData("ACC", c("Mutation", "RNASeq2GeneNorm", "Methylation"), dry.run = FALSE)) #~3 minutes
+system.time(mae <- curatedTCGAData("ACC", c("Mutation", "RNASeq2GeneNorm", "Methylation"), dry.run = FALSE)) 
+## traditional methylation representation:
 ##    user  system elapsed 
 ## 171.516   3.109 181.086 
+## HDF5 methylation representation (curatedTCGAData >= 1.5.6)
+##  user  system elapsed 
+## 6.223   0.223   9.607 
 
 ## create a data.frame for the methylation
-meth <- assay(mae, 1)
+meth <- assay(mae, "ACC_Methylation-20160128")
 meth <- !is.na(meth) #NOT NA
 meth <- meth * 1L #convert to integer mode
+system.time(meth <- as.matrix(meth))
 # number of non-missing per gene in each column
 meth <- rowsum(meth, group=rowData(mae[["ACC_Methylation-20160128"]])$Gene_Symbol)
 meth <- meth > 0 # logical "have at least a methylation"
@@ -62,7 +67,11 @@ sort(colSums(keep), decreasing = TRUE)[1:round(ncol(keep)*0.05)]
 # TCGA-OR-A5J5-01A-11R-A29S-07 TCGA-OR-A5JA-01A-11R-A29S-07 
 # 26                           22 
 
-# > proc.time() - almost all disk access (magnetic drive on my laptop), only ~4 seconds system time
+# > proc.time() with traditional methylation storage
+#   almost all disk access (magnetic drive on my laptop), only ~4 seconds system time
 #    user  system elapsed 
 # 208.178   4.299 220.584 
 
+# > proc.time() with HDF5 methylation storage
+#   user  system elapsed 
+# 35.139   2.641  48.287 
