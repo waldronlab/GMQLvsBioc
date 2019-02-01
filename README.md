@@ -45,3 +45,34 @@ MUTATION_GENE_top = ORDER(mutation_count DESC;
 meta_topp: 5) MUTATION_GENE_count;
 MATERIALIZE MUTATION_GENE_top INTO MUTATION_
 GENE_top;
+
+# BigQuery approach
+
+```sql
+with tbl as (SELECT 
+  m.Reference_Allele,
+  m.Tumor_Seq_Allele1,
+  m.Tumor_Seq_Allele2,
+  m.Start_Position,
+  m.End_Position,
+  m.Chromosome,
+  HTSeq__FPKM,
+  CASE WHEN e.strand='+' THEN e.start-2000 ELSE e.end END as region_start,
+  CASE WHEN e.strand='-' THEN e.end+2000 ELSE e.start END as region_end,
+  e.seq_name,
+  e.strand,
+  e.gene_name, 
+  e.gene_id,
+  r.sample_barcode
+FROM `isb-cgc.genome_reference.Ensembl_GRCh38_87` e 
+JOIN `isb-cgc.TCGA_hg38_data_v0.RNAseq_Gene_Expression` r on r.Ensembl_gene_id=e.gene_id
+JOIN `isb-cgc.TCGA_hg38_data_v0.Somatic_Mutation` m on r.sample_barcode=m.sample_barcode_tumor
+WHERE r.HTSeq__FPKM>3 
+  AND concat('chr',e.seq_name) = m.Chromosome
+  AND m.Start_Position > (CASE WHEN e.strand='+' THEN e.start-2000 ELSE e.end END) 
+  AND m.Start_Position < (CASE WHEN e.strand='-' THEN e.end+2000 ELSE e.start END))
+select tbl.*, c.mutation_count 
+from tbl 
+join (select sample_barcode, count(*) as mutation_count from tbl group by sample_barcode) c
+on c.sample_barcode=tbl.sample_barcode limit 100;
+```
